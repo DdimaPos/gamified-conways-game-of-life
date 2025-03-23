@@ -64,14 +64,14 @@ _**And so, the war continues…**_
 
 Actually in our game there will be 3 types of cells:
 
-1. Empty cell with nothing. Can be shown as grass image or just make it green for visual appearance. It is populate by other 2 types of cells 
-2. Goblic cell
+1. Empty cell with nothing. Can be shown as grass image or just make it green for visual appearance. It can be populated by other 2 types of cells
+2. Goblin cell
 3. Magician cell 
 
-- A goblin/magician cell survives if it has 2 or 3 neighbors of its kind.
-- A goblin/magician cell dies from loneliness if it has 0 or 1 neighbors.
-- A goblin/magician cell dies from overcrowding if it has 4 or more neighbors.
-- An empty cell spawns a goblin or magician if it has exactly 3 neighbors of that type
+  - A goblin/magician cell survives if it has 2 or 3 neighbors of its kind.
+  - A goblin/magician cell dies from loneliness if it has 0 or 1 neighbors.
+  - A goblin/magician cell dies from overcrowding if it has 4 or more neighbors.
+  - An empty cell spawns a goblin or magician if it has exactly 3 neighbors of that type
 
 ### Special combat rules 
 
