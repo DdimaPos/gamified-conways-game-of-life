@@ -108,3 +108,12 @@ A place of peaceful existence with the following rule:
 #### Deadly place (Cementery of ash)
 
 - Cells die if they have <3 neighbors.
+
+
+### How it can look
+Example magician sprite:
+<img width="119" alt="image" src="https://github.com/user-attachments/assets/0b007deb-b2c3-4524-af54-d3c43227b740" />
+
+Example goblic sprite:
+<br/>
+<img width="119" alt="image" src="https://github.com/user-attachments/assets/d0334118-ea38-4459-bf2c-69ee9e8a843d" />
