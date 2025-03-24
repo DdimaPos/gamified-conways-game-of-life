@@ -12,9 +12,9 @@ zones, rules for zones, etc). In other words create the concept
 2. Provide a detailed analysis on the behaviour of the cells in all the zones compared 
 to the others. This information have to be in a report with screenshots attached
 3. Implement the logic of the game itself (the actual updating of the cells on the map)
-4. Define the user interaction with the game (to pause and play the simulation, 
-to edit the cells on the map, to reset the map, to randomize the map)
+4. Define the user interaction with the game (to pause and play the simulation on `space`, 
+to edit the cells on the map (with`left click` to add goblins, `r-click` to add magicians)
 5. Upload the game to itch.io
 
-Task 1 and 2 can be done by 2 persons.
-Task 3-5 by other 3
+Task 1 and 2 can be done by 2 persons (Cristi and Dima).
+Task 3-5 by other 3 (Ion, Gabi, Liviu)
