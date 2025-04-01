@@ -271,6 +271,41 @@ def update_life_grid():
                         # Magicians survive if they have between 2 and 5 mage neighbors.
                         new_grid[i][j] = "mage" if 2 <= mage_count <= 5 else None
 
+            # --- Deadly Zone: brown_grass ---
+            elif terrain == "brown_grass":
+                if cell is None:
+                    # If both goblins and mages try to expand to the same empty cell, do not populate it.
+                    if goblin_count == 3 and mage_count == 3:
+                        conflicts.append((i, j, goblin_count, mage_count))
+                    # Normal reproduction: Spawn if exactly 3 neighbors of one type exist.
+                    elif goblin_count == 3 and mage_count != 3:
+                        new_grid[i][j] = "goblin"
+                    elif mage_count == 3 and goblin_count != 3:
+                        new_grid[i][j] = "mage"
+                
+                else:
+                    # Only consider same-type neighbors for survival
+                    same_type_neighbors = goblin_count if cell == "goblin" else mage_count
+
+                    # Overcrowding: Dies if it has 4 or more same-type neighbors
+                    if same_type_neighbors >= 4:
+                        new_grid[i][j] = None
+                    # Isolation: Dies if it has fewer than 3 same-type neighbors
+                    elif same_type_neighbors < 3:
+                        new_grid[i][j] = None
+                    else:
+                        # Conflict resolution if both goblins and mages are nearby
+                        if goblin_count > 0 and mage_count > 0:
+                            if goblin_count > mage_count:
+                                new_grid[i][j] = "goblin"
+                            elif mage_count > goblin_count:
+                                new_grid[i][j] = "mage"
+                            else:
+                                new_grid[i][j] = cell  # Keep the existing occupant if equal allies
+                        else:
+                            new_grid[i][j] = cell  # Maintain the cell's current state if no rival conflict
+
+
             # --- Default: Other terrain uses normal rules ---
             else:
                 if cell is None:
