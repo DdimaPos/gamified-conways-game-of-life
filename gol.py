@@ -59,52 +59,150 @@ def scale_sprites():
 
 scale_sprites()
 
+from collections import deque
+
 def generate_clustered_terrain():
     """Generates a clustered terrain map with multiple clusters per terrain type."""
-    # Initialize grid with normal grass
-    grid = [["normal_grass" for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
-    cluster_map = {}  # Stores cluster positions for each terrain type
 
-    # Create clusters for each terrain type
-    for terrain in terrain_types:
-        cluster_map[terrain] = []
-        # Create 2-4 clusters of each terrain type
-        num_clusters = random.randint(2, 4)
-        
-        for _ in range(num_clusters):
-            start_x = random.randint(0, GRID_WIDTH - 1)
-            start_y = random.randint(0, GRID_HEIGHT - 1)
-            
-            # Random cluster size ranging from small to large
-            cluster_size = random.randint(50, 300)
-            stack = [(start_x, start_y)]
-            count = 0
-            cluster_positions = set()
-            
-            # Depth-first exploration to create natural-looking clusters
-            while stack and count < cluster_size:
-                x, y = stack.pop()
-                if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] == "normal_grass":
-                    grid[y][x] = terrain
-                    cluster_positions.add((x, y))
-                    count += 1
-                    
-                    # Randomly decide expansion probability for more natural clusters
-                    neighbors = []
-                    for nx, ny in [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]:
-                        if 0 <= nx < GRID_WIDTH and 0 <= ny < GRID_HEIGHT:
-                            # Higher probability to expand in same direction for more natural shapes
-                            if random.random() < 0.7:
-                                neighbors.append((nx, ny))
-                    
-                    random.shuffle(neighbors)
-                    stack.extend(neighbors)
-            
-            # Only store clusters if they're big enough
-            if len(cluster_positions) > 10:
-                cluster_map[terrain].append(cluster_positions)
+    def is_cluster_large_enough(grid):
+        """Check if all clusters meet the minimum size requirement."""
+        MIN_CLUSTER_SIZE = {
+            "cobble": 25,
+            "red_grass": 25,
+            "flower_land": 50,
+            "brown_grass": 50
+        }
+
+        terrain_counts = {terrain: 0 for terrain in MIN_CLUSTER_SIZE.keys()}
+
+        # Count terrain occurrences
+        for y in range(GRID_HEIGHT):
+            for x in range(GRID_WIDTH):
+                if grid[y][x] in terrain_counts:
+                    terrain_counts[grid[y][x]] += 1
+
+        # Check if all terrain types meet the required minimum size
+        for terrain, min_size in MIN_CLUSTER_SIZE.items():
+            if terrain_counts[terrain] < min_size:
+                return False
+        return True
+
+    def generate():
+        """Generates the terrain and clusters."""
+        grid = [["normal_grass" for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+        cluster_map = {}
+
+        # Define terrain generation order
+        terrain_order = [
+            ["cobble", "red_grass"],
+            ["brown_grass", "flower_land"]
+        ]
+
+        for tier in terrain_order:
+            for terrain in tier:
+                cluster_map[terrain] = []
+                num_clusters = 1 if terrain in ["cobble", "red_grass"] else random.randint(2, 4)
+                largest_cluster = None
+
+                for _ in range(num_clusters):
+                    start_x = random.randint(0, GRID_WIDTH - 1)
+                    start_y = random.randint(0, GRID_HEIGHT - 1)
+
+                    cluster_size = random.randint(50, 300)
+                    stack = [(start_x, start_y)]
+                    count = 0
+                    cluster_positions = set()
+
+                    while stack and count < cluster_size:
+                        x, y = stack.pop()
+                        if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] == "normal_grass":
+                            grid[y][x] = terrain
+                            cluster_positions.add((x, y))
+                            count += 1
+
+                            # Ensure connectivity
+                            neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+                            if count % 5 == 0:
+                                neighbors += [(x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
+
+                            random.shuffle(neighbors)
+                            stack.extend(n for n in neighbors if 0 <= n[0] < GRID_WIDTH and 0 <= n[1] < GRID_HEIGHT)
+
+                    if len(cluster_positions) > 25:
+                        if terrain in ["cobble", "red_grass"]:
+                            if largest_cluster is None or len(cluster_positions) > len(largest_cluster):
+                                largest_cluster = cluster_positions
+                        else:
+                            cluster_map[terrain].append(cluster_positions)
+
+                if largest_cluster:
+                    cluster_map[terrain] = [largest_cluster]
+
+        return grid, cluster_map
+
+    # Loop until the terrain satisfies the cluster size requirements
+    grid, cluster_map = generate()
+    while not is_cluster_large_enough(grid):
+        grid, cluster_map = generate()
+
+    # Post-processing: Remove isolated 1x1 or 2x2 spots for any terrain type
+    for y in range(1, GRID_HEIGHT - 1):
+        for x in range(1, GRID_WIDTH - 1):
+            current_terrain = grid[y][x]
+            terrain_counts = {}
+
+            # Count surrounding terrain types
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
+                neighbor = grid[y + dy][x + dx]
+                terrain_counts[neighbor] = terrain_counts.get(neighbor, 0) + 1
+
+            # If a terrain has 2 or fewer matching neighbors, convert it to the dominant surrounding terrain
+            if terrain_counts.get(current_terrain, 0) <= 1:
+                dominant_terrain = max(terrain_counts, key=terrain_counts.get)
+                if terrain_counts[dominant_terrain] >= 6:
+                    grid[y][x] = dominant_terrain
+
+    # Post-processing: Fill in fully enclosed normal_grass patches
+    def is_enclosed(x, y, grid, target_type):
+        """Checks if a `normal_grass` patch is completely enclosed by a single terrain type."""
+        queue = deque([(x, y)])
+        visited = set()
+        enclosed = True
+        dominant_terrain = None
+
+        while queue:
+            cx, cy = queue.popleft()
+            if (cx, cy) in visited:
+                continue
+            visited.add((cx, cy))
+
+            # Check bounds
+            if cx == 0 or cy == 0 or cx == GRID_WIDTH - 1 or cy == GRID_HEIGHT - 1:
+                enclosed = False  # Touching the edge means it's not enclosed
+
+            # Scan neighbors
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < GRID_WIDTH and 0 <= ny < GRID_HEIGHT:
+                    neighbor = grid[ny][nx]
+                    if neighbor == target_type:
+                        queue.append((nx, ny))
+                    elif dominant_terrain is None:
+                        dominant_terrain = neighbor  # First surrounding terrain
+                    elif dominant_terrain != neighbor:
+                        enclosed = False  # Different terrain types mean it's not fully enclosed
+
+        return enclosed, dominant_terrain
+
+    for y in range(GRID_HEIGHT):
+        for x in range(GRID_WIDTH):
+            if grid[y][x] == "normal_grass":
+                enclosed, dominant_terrain = is_enclosed(x, y, grid, "normal_grass")
+                if enclosed and dominant_terrain:
+                    grid[y][x] = dominant_terrain  # Convert fully enclosed patch
 
     return grid, cluster_map
+
 
 def check_building_fit(x, y, terrain_type):
     """Check if a building can fit at the given position on the specified terrain."""
@@ -305,6 +403,20 @@ def update_life_grid():
                         else:
                             new_grid[i][j] = cell  # Maintain the cell's current state if no rival conflict
 
+            # --- Peaceful Zone: flower_land ---
+            elif terrain == "flower_land":
+                alive_neighbors = goblin_count + mage_count  # Count all alive cells regardless of type
+
+                if cell is None:
+                    # Spawn a random mob if exactly 3 alive neighbors exist
+                    if alive_neighbors == 3:
+                        new_grid[i][j] = random.choice(["goblin", "mage"])
+                else:
+                    # Survival rules based on total alive neighbors
+                    if alive_neighbors < 2 or alive_neighbors > 4:
+                        new_grid[i][j] = None  # Dies due to isolation or overpopulation
+                    else:
+                        new_grid[i][j] = cell  # Survives
 
             # --- Default: Other terrain uses normal rules ---
             else:
