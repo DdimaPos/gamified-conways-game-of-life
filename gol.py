@@ -5,8 +5,8 @@ import pygame
 pygame.init()
 
 # Screen settings
-WIDTH, HEIGHT = 800, 800
-TILE_SIZE = 20
+WIDTH, HEIGHT = 1000, 1000
+TILE_SIZE = 15
 GRID_WIDTH = WIDTH // TILE_SIZE
 GRID_HEIGHT = HEIGHT // TILE_SIZE
 
@@ -34,7 +34,7 @@ GOBLIN_STRONGHOLD = "brown_grass"  # Brown grass is goblin territory
 MAGE_BASE = "flower_land"         # Flower land is mage territory
 
 # Game of Life settings
-SIMULATION_SPEED = 40 # Frames between updates
+SIMULATION_SPEED = 2 # Frames between updates
 simulation_counter = 0
 paused = True  # Start paused
 
