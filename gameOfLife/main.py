@@ -503,11 +503,15 @@ def add_random_entities(entity_type, count=50):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--width", type=int, default=800, help="Width of the window")
-    parser.add_argument("--height", type=int, default=800, help="Height of the window")
-    parser.add_argument("--tilesize", type=int, default=20, help="Size of each tile")
-    parser.add_argument("--delay", type=int, default=30, help="Frames per second")
-    
+    parser.add_argument("--width", type=int, default=800,
+                        help="Width of the window")
+    parser.add_argument("--height", type=int, default=800,
+                        help="Height of the window")
+    parser.add_argument("--tilesize", type=int, default=20,
+                        help="Size of each tile")
+    parser.add_argument("--delay", type=int, default=30,
+                        help="Frames per second")
+
     args = parser.parse_args()
     # Screen settings
     WIDTH = args.width
